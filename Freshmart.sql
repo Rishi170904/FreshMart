@@ -168,8 +168,7 @@ SELECT
         SUM(st.QuantitySold * st.SalePrice) * 100.0 / 
         NULLIF((SELECT SUM(s2.QuantitySold * s2.SalePrice) 
                 FROM SalesTransactions s2 
-                WHERE DATE_FORMAT(s2.SaleDate, '%Y-%m') = 
-                      DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m')), 0), 
+                WHERE s2.SaleDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)), 0), 
         2
     ) AS RevenueSharePct
 FROM
@@ -177,8 +176,7 @@ FROM
     JOIN Products p ON st.ProductID = p.ProductID
     JOIN Categories c ON p.CategoryID = c.CategoryID
 WHERE
-    DATE_FORMAT(st.SaleDate, '%Y-%m') = 
-    DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m')
+    st.SaleDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
 GROUP BY
     c.CategoryID, c.CategoryName
 ORDER BY
