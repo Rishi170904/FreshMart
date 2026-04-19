@@ -12,7 +12,8 @@ REPORT 2 – DEAD STOCK (no sales in last 60 days)
 
 
 REPORT 3 – REVENUE BY CATEGORY (last calendar month)
-<img width="602" height="43" alt="image" src="https://github.com/user-attachments/assets/b27096b6-4d57-4f2a-90ec-4e10f32685d3" />
+<img width="603" height="140" alt="image" src="https://github.com/user-attachments/assets/d56862bd-0852-4028-84e7-efd422c49222" />
+
 
 
 
