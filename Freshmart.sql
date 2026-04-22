@@ -1,53 +1,50 @@
 -- FreshMart – Stock Health Report
--- Create and select the database
+-- Setup and selection of Database
 CREATE DATABASE IF NOT EXISTS FreshMart;
 USE FreshMart;
 
--- SECTION 1 – SCHEMA DESIGN
-DROP TABLE IF EXISTS SalesTransactions;
+DROP TABLE IF EXISTS Sales_Transactions;
 DROP TABLE IF EXISTS Products;
 DROP TABLE IF EXISTS Categories;
 
 -- 1A. Categories
 CREATE TABLE Categories (
-    CategoryID   INT          PRIMARY KEY AUTO_INCREMENT,
-    CategoryName VARCHAR(100) NOT NULL,
-    Description  TEXT
+    Category_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Category_Name VARCHAR(100) NOT NULL,
+    Description TEXT
 );
 
 -- 1B. Products
 CREATE TABLE Products (
-    ProductID    INT            PRIMARY KEY AUTO_INCREMENT,
-    ProductName  VARCHAR(150)   NOT NULL,
-    CategoryID   INT            NOT NULL,
-    UnitPrice    DECIMAL(10,2)  NOT NULL CHECK (UnitPrice >= 0),
-    StockCount   INT            NOT NULL DEFAULT 0 CHECK (StockCount >= 0),
-    ExpiryDate   DATE,
-    CreatedAt    DATETIME       DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID)
+    Product_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Product_Name VARCHAR(150) NOT NULL,
+    Category_ID INT NOT NULL,
+    Unit_Price DECIMAL(10,2) NOT NULL CHECK (Unit_Price >= 0),
+    Stock_Count INT NOT NULL DEFAULT 0 CHECK (Stock_Count >= 0),
+    Expiry_Date DATE,
+    FOREIGN KEY (Category_ID) REFERENCES Categories(Category_ID)
 );
 
 -- 1C. SalesTransactions
-CREATE TABLE SalesTransactions (
-    TransactionID  INT            PRIMARY KEY AUTO_INCREMENT,
-    ProductID      INT            NOT NULL,
-    QuantitySold   INT            NOT NULL CHECK (QuantitySold > 0),
-    SalePrice      DECIMAL(10,2)  NOT NULL CHECK (SalePrice >= 0),
-    SaleDate       DATE           NOT NULL,
-    CreatedAt      DATETIME       DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (ProductID) REFERENCES Products(ProductID)
+CREATE TABLE Sales_Transactions (
+    Transaction_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Product_ID INT NOT NULL,
+    Quantity_Sold INT NOT NULL CHECK (Quantity_Sold > 0),
+    Sale_Price DECIMAL(10,2) NOT NULL CHECK (Sale_Price >= 0),
+    Sale_Date DATE  NOT NULL,
+    FOREIGN KEY (Product_ID) REFERENCES Products(Product_ID)
 );
 
 -- SECTION 2 – DUMMY DATA
 
-INSERT INTO Categories (CategoryName, Description) VALUES
-    ('Dairy',     'Milk, cheese, yogurt, and related products'),
-    ('Bakery',    'Breads, cakes, pastries, and confections'),
-    ('Produce',   'Fresh fruits and vegetables'),
-    ('Beverages', 'Juices, soft drinks, water, and tea'),
-    ('Snacks',    'Chips, biscuits, nuts, and packaged snacks');
+INSERT INTO Categories (Category_Name, Description) VALUES
+    ('Dairy','Milk, cheese, yogurt, and related products'),
+    ('Bakery','Breads, cakes, pastries, and confections'),
+    ('Produce','Fresh fruits and vegetables'),
+    ('Beverages','Juices, soft drinks, water, and tea'),
+    ('Snacks','Chips, biscuits, nuts, and packaged snacks');
 
-INSERT INTO Products (ProductName, CategoryID, UnitPrice, StockCount, ExpiryDate) VALUES
+INSERT INTO Products (Product_Name, Category_ID, Unit_Price, Stock_Count, Expiry_Date) VALUES
     -- Dairy (IDs 1-5)
     ('Full Cream Milk 1L', 1, 55.00, 120, DATE_ADD(CURDATE(), INTERVAL 3 DAY)),
     ('Greek Yogurt 200g', 1, 45.00, 80, DATE_ADD(CURDATE(), INTERVAL 5 DAY)),
@@ -81,7 +78,7 @@ INSERT INTO Products (ProductName, CategoryID, UnitPrice, StockCount, ExpiryDate
     ('MilkyBar 100g', 5, 80.00, 90, DATE_ADD(CURDATE(), INTERVAL 240 DAY)),
     ('Act II popcorn (pack of 6)', 5, 60.00, 30, DATE_ADD(CURDATE(), INTERVAL 200 DAY));
 
-INSERT INTO SalesTransactions (ProductID, QuantitySold, SalePrice, SaleDate) VALUES
+INSERT INTO Sales_Transactions (Product_ID, Quantity_Sold, Sale_Price, Sale_Date) VALUES
     -- Recent sales (within last 30 days)
     (1,10, 55.00,  DATE_SUB(CURDATE(), INTERVAL 5 DAY)),
     (2,20, 45.00,  DATE_SUB(CURDATE(), INTERVAL 3 DAY)),
@@ -111,23 +108,23 @@ INSERT INTO SalesTransactions (ProductID, QuantitySold, SalePrice, SaleDate) VAL
 SELECT '===== REPORT 1 – EXPIRING SOON (next 7 days, stock > 50) =====' AS 'Report Name';
 
 SELECT
-    p.ProductID,
-    p.ProductName,
-    c.CategoryName,
-    p.StockCount,
-    p.UnitPrice,
-    p.ExpiryDate,
-    DATEDIFF(p.ExpiryDate, CURDATE()) AS DaysUntilExpiry,
-    ROUND(p.StockCount * p.UnitPrice, 2) AS PotentialLossINR
+    p.Product_ID,
+    p.Product_Name,
+    c.Category_Name,
+    p.Stock_Count,
+    p.Unit_Price,
+    p.Expiry_Date,
+    DATEDIFF(p.Expiry_Date, CURDATE()) AS Days_Until_Expiry,
+    ROUND(p.Stock_Count * p.Unit_Price, 2) AS Potential_Loss
 FROM
     Products p
-    JOIN Categories c ON p.CategoryID = c.CategoryID
+    JOIN Categories c ON p.Category_ID = c.Category_ID
 WHERE
-    p.ExpiryDate IS NOT NULL
-    AND p.ExpiryDate <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-    AND p.StockCount > 50
+    p.Expiry_Date IS NOT NULL
+    AND p.Expiry_Date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+    AND p.Stock_Count > 50
 ORDER BY
-    DaysUntilExpiry ASC;
+    Days_Until_Expiry ASC;
 
 -- ============================================================
 -- REPORT 2 – DEAD STOCK
@@ -135,24 +132,24 @@ ORDER BY
 SELECT '===== REPORT 2 – DEAD STOCK (no sales in last 60 days) =====' AS 'Report Name';
 
 SELECT
-    p.ProductID,
-    p.ProductName,
-    c.CategoryName,
-    p.StockCount,
-    p.UnitPrice,
-    ROUND(p.StockCount * p.UnitPrice, 2) AS TotalStockValueINR
+    p.Product_ID,
+    p.Product_Name,
+    c.Category_Name,
+    p.Stock_Count,
+    p.Unit_Price,
+    ROUND(p.Stock_Count * p.Unit_Price, 2) AS Total_Stock_Value
 FROM
     Products p
-    JOIN Categories c ON p.CategoryID = c.CategoryID
-    LEFT JOIN SalesTransactions st 
-           ON st.ProductID = p.ProductID 
-          AND st.SaleDate >= DATE_SUB(CURDATE(), INTERVAL 60 DAY)
+    JOIN Categories c ON p.Category_ID = c.Category_ID
+    LEFT JOIN Sales_Transactions st 
+           ON st.Product_ID = p.Product_ID 
+          AND st.Sale_Date >= DATE_SUB(CURDATE(), INTERVAL 60 DAY)
 WHERE
-    st.TransactionID IS NULL
+    st.Transaction_ID IS NULL
 GROUP BY
-    p.ProductID, p.ProductName, c.CategoryName, p.StockCount, p.UnitPrice
+    p.Product_ID, p.Product_Name, c.Category_Name, p.Stock_Count, p.Unit_Price
 ORDER BY
-    TotalStockValueINR DESC;
+    Total_Stock_Value DESC;
 
 -- ============================================================
 -- REPORT 3 – REVENUE BY CATEGORY (last calendar month)
@@ -160,24 +157,24 @@ ORDER BY
 SELECT '===== REPORT 3 – REVENUE BY CATEGORY (last calendar month) =====' AS 'Report Name';
 
 SELECT
-    c.CategoryName,
-    COUNT(DISTINCT st.TransactionID) AS TotalTransactions,
-    SUM(st.QuantitySold) AS TotalUnitsSold,
-    ROUND(SUM(st.QuantitySold * st.SalePrice), 2) AS TotalRevenueINR,
+    c.Category_Name,
+    COUNT(DISTINCT st.Transaction_ID) AS Total_Transactions,
+    SUM(st.Quantity_Sold) AS Total_Units_Sold,
+    ROUND(SUM(st.Quantity_Sold * st.Sale_Price), 2) AS Total_Revenue,
     ROUND(
-        SUM(st.QuantitySold * st.SalePrice) * 100.0 / 
-        NULLIF((SELECT SUM(s2.QuantitySold * s2.SalePrice) 
-                FROM SalesTransactions s2 
-                WHERE s2.SaleDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)), 0), 
+        SUM(st.Quantity_Sold * st.Sale_Price) * 100.0 / 
+        NULLIF((SELECT SUM(s2.Quantity_Sold * s2.Sale_Price) 
+                FROM Sales_Transactions s2 
+                WHERE s2.Sale_Date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)), 0), 
         2
-    ) AS RevenueSharePct
+    ) AS Revenue_Share
 FROM
-    SalesTransactions st
-    JOIN Products p ON st.ProductID = p.ProductID
-    JOIN Categories c ON p.CategoryID = c.CategoryID
+    Sales_Transactions st
+    JOIN Products p ON st.Product_ID = p.Product_ID
+    JOIN Categories c ON p.Category_ID = c.Category_ID
 WHERE
-    st.SaleDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+    st.Sale_Date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
 GROUP BY
-    c.CategoryID, c.CategoryName
+    c.Category_ID, c.Category_Name
 ORDER BY
-    TotalRevenueINR DESC;
+    Total_Revenue DESC;
